@@ -2,7 +2,7 @@
 %   Follows the course rules: no titles (use LaTeX captions), axis names
 %   with units, readable fonts. Saves vector PDFs in figures/.
 
-if ~exist('figures','dir'), mkdir('figures'); end
+if ~isfolder(fullfile(pwd,'figures')), mkdir(fullfile(pwd,'figures')); end
 fontSize = 12;
 lw = 1.5;
 

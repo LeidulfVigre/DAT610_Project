@@ -40,7 +40,7 @@ function p = baseConfig()
     p.BSProcessingDelay = 1;         % slots (example default)
 
     % Receiver
-    p.PerfectChannelEstimator   = false;               % practical DM-RS / CSI-RS estimation
+    p.PerfectChannelEstimator   = true;                % ideal channel knowledge at the UE
     p.LDPCDecodingAlgorithm     = "Normalized min-sum";
     p.MaximumLDPCIterationCount = 6;
 

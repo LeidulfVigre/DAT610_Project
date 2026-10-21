@@ -1,0 +1,68 @@
+
+function [Wprg,Hprg] = hSVDPrecoders(carrier,pdsch,H,prgsize)
+%hSVDPrecoders Get PRG precoders from a channel estimate using SVD
+
+%   Copyright 2023-2024 The MathWorks, Inc.
+
+    % Get PRG information
+    prgInfo = nrPRGInfo(carrier,prgsize);
+
+    % Average the channel estimate across all subcarriers in each RB and
+    % across all OFDM symbols, extract allocated RBs, then permute to shape
+    % R-by-P-by-NPRB where R is the number of receive antennas, P is the
+    % number of transmit antennas and NPRB is the number of allocated RBs
+    gridrbset = getGridRBSet(carrier,pdsch);
+    [K,L,R,P] = size(H);
+    H = reshape(H,[12 K/12 L R P]);
+    H = mean(H,[1 3]);
+    H = H(:,gridrbset + 1,:,:,:);
+    H = permute(H,[4 5 2 1 3]);
+
+    % For each PRG
+    nu = pdsch.NumLayers;
+    Wprg = zeros([nu P prgInfo.NPRG]);
+    Hprg = zeros([R P prgInfo.NPRG]);
+    pdschPRGs = prgInfo.PRGSet(gridrbset + 1);
+    uprg = unique(pdschPRGs).';
+    for i = uprg
+
+        % Average the channel estimate across all allocated RBs in the PRG,
+        % excluding RBs with zero estimates (e.g., RBs without pilots in
+        % 0.5 density CSI-RS). For standard DMRS configurations (pilots in
+        % every PRB) and for 0.5 density CSI-RS with valid PRG sizes
+        % (minimum 2 PRBs), every PRG always contains at least one pilot
+        % RB. The mean never receives an empty array. If a PRG has no
+        % pilots, the channel estimate and SVD precoder will be NaN.
+        Hprb = H(:,:,pdschPRGs==i);
+        nz = ~all(Hprb==0,[1 2]);
+        Hprg(:,:,i) = mean(Hprb(:,:,nz),3);
+
+        % Get SVD-based precoder for the PRG
+        [~,~,V] = svd(Hprg(:,:,i));
+        W = permute(V(:,1:nu,:),[2 1 3]);
+        W = W / sqrt(nu);
+        Wprg(:,:,i) = W;
+
+    end
+
+end
+
+% Get allocated RBs in the carrier resource grid i.e. relative to
+% NStartGrid
+function gridrbset = getGridRBSet(carrier,pdsch)
+
+    if (pdsch.VRBToPRBInterleaving)
+        [~,indinfo] = nrPDSCHIndices(carrier,pdsch);
+        gridrbset = indinfo.PRBSet;
+    else
+        gridrbset = pdsch.PRBSet;
+    end
+
+    if (isempty(pdsch.NStartBWP))
+        bwpOffset = 0;
+    else
+        bwpOffset = pdsch.NStartBWP - carrier.NStartGrid;
+    end
+    gridrbset = gridrbset + bwpOffset;
+
+end

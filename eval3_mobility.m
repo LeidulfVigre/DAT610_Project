@@ -5,6 +5,7 @@
 
 p0 = baseConfig();
 p0.SNRdB = 20;                                      % dB
+p0.NFrames = 200;
 speeds  = [3 30 60 120];                            % km/h
 periods = [5 20 80];                                % slots
 

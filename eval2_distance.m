@@ -6,7 +6,7 @@
 %   Output: results/eval2.mat
 
 p0 = baseConfig();
-dist = 100:100:1000;                                % m
+dist = [100 200 300 400 500 750 1000 1500 2000 3000 4000 5000];   % m
 
 scen(1) = struct('Name',"LOS (TDL-D)", 'LOS',true, 'DelayProfile','TDL-D','DelaySpread',100e-9);
 scen(2) = struct('Name',"NLOS (TDL-C)",'LOS',false,'DelayProfile','TDL-C','DelaySpread',300e-9);
